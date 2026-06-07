@@ -5,6 +5,19 @@ A CNN-based image classification system that identifies four roles in football m
 This project was developed as part of the Pattern Recognition course at the University of Europe for Applied Sciences (MSc Software Engineering).
 
 ---
+## Student Information
+
+| Field | Details |
+|---|---|
+| **Name** | Marcelo Augusto de Azevedo Freitas Filho |
+| **Student ID** | 72007730 |
+| **Course** | MSc Software Engineering |
+| **Subject** | Pattern Recognition |
+| **University** | University of Europe for Applied Sciences |
+| **Professor** | Raja Hashim Ali |
+| **Deadline** | Jun 07, 2026 |
+
+---
 
 ## Project Overview
 
