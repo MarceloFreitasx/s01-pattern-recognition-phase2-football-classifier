@@ -69,6 +69,7 @@ football-classifier/
 │   └── test/
 ├── dataset/                # Extracted crops by class
 ├── dataset_balanced/       # Balanced dataset used for training
+├── kaggle-notebook         # Kaggle notebook (ipynb file)
 └── outputs/                # Saved models and generated figures
     ├── best_custom_cnn.keras
     ├── best_mobilenet_ft.keras
@@ -175,11 +176,3 @@ python inference_demo.py
 5. **Evaluation** — Accuracy, precision, recall, F1-score, confusion matrix
 6. **Explainability** — Grad-CAM applied to the last convolutional layer of each model
 7. **Inference demo** — MobileNetV2 applied to a full match image with ground truth bounding boxes and model predictions overlaid
-
----
-
-## Author
-
-Marcelo Augusto
-MSc Software Engineering — University of Europe for Applied Sciences
-Pattern Recognition — Summer 2026
