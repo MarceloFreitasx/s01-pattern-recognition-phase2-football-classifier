@@ -27,17 +27,21 @@ The system uses object crops extracted from real match footage and classifies th
 - **MobileNetV2** — a pre-trained model fine-tuned with transfer learning
 - **ResNet50** — a deeper pre-trained model fine-tuned with transfer learning
 
-Grad-CAM visualizations are included to explain which image regions influenced each model's predictions. An inference demo shows the best model (MobileNetV2) applied to a real match image with bounding boxes drawn for every annotated object.
+Grad-CAM visualizations are included to explain which image regions influenced each model's predictions. An inference demo applies MobileNetV2 to a real match image with bounding boxes drawn for every annotated object.
 
 ---
 
 ## Results
 
-| Model | Accuracy | F1-Score (macro) |
-|---|---|---|
-| Custom CNN | 67.87% | 0.72 |
-| **MobileNetV2** | **76.39%** | **0.78** |
-| ResNet50 | 71.35% | 0.74 |
+Evaluated on the held-out **test split** (307 crops, preserved from Roboflow):
+
+| Model | Test Accuracy | F1-Score (macro) | Val Accuracy |
+|---|---|---|---|
+| **Custom CNN** | **77.85%** | **0.67** | 71.89% |
+| MobileNetV2 | 69.06% | 0.60 | 67.08% |
+| ResNet50 | 84.04% | 0.23 | 84.43% |
+
+> ResNet50 achieves high accuracy by heavily favouring the majority `player` class (imbalanced val/test splits). **Custom CNN** delivers the best balanced performance across all four classes.
 
 ---
 
@@ -48,9 +52,10 @@ Grad-CAM visualizations are included to explain which image regions influenced e
 - **Classes:** ball, goalkeeper, player, referee
 - **Raw images:** 663 match images (train + valid + test)
 - **Extracted crops:** 15,636 individual object crops
-- **Balanced dataset:** 3,878 images (up to 1,500 per class)
+- **Balanced training set:** up to 1,500 images per class (train split only)
+- **Train/valid/test split:** preserved from the original Roboflow dataset — no data leakage between match images
 
----
+**Kaggle Notebook:** [football-player-detection](https://www.kaggle.com/code/marcelofreitasx/football-player-detection)
 
 ## Project Structure
 
@@ -67,9 +72,15 @@ football-classifier/
 │   ├── train/
 │   ├── valid/
 │   └── test/
-├── dataset/                # Extracted crops by class
-├── dataset_balanced/       # Balanced dataset used for training
-├── kaggle-notebook         # Kaggle notebook (ipynb file)
+├── dataset/                # Extracted crops by split and class
+│   ├── train/
+│   ├── valid/
+│   └── test/
+├── dataset_balanced/       # Train balanced; valid/test preserved
+│   ├── train/
+│   ├── valid/
+│   └── test/
+├── kaggle-notebook/        # Kaggle notebook (ipynb file)
 └── outputs/                # Saved models and generated figures
     ├── best_custom_cnn.keras
     ├── best_mobilenet_ft.keras
@@ -82,6 +93,9 @@ football-classifier/
     ├── cm_Custom_CNN.pdf
     ├── cm_MobileNetV2.pdf
     ├── cm_ResNet50.pdf
+    ├── cm_Custom_CNN_test.pdf
+    ├── cm_MobileNetV2_test.pdf
+    ├── cm_ResNet50_test.pdf
     ├── model_comparison.pdf
     ├── gradcam_Custom_CNN.pdf
     ├── gradcam_MobileNetV2.pdf
@@ -160,8 +174,9 @@ python inference_demo.py
 | `class_distribution.pdf` | Bar chart showing the balanced class distribution |
 | `sample_images.pdf` | Grid of sample images from each class |
 | `curves_*.pdf` | Training and validation accuracy/loss curves per model |
-| `cm_*.pdf` | Confusion matrix per model |
-| `model_comparison.pdf` | Bar chart comparing validation accuracy across models |
+| `cm_*.pdf` | Confusion matrix per model (validation set) |
+| `cm_*_test.pdf` | Confusion matrix per model (held-out test set) |
+| `model_comparison.pdf` | Bar chart comparing test accuracy across models |
 | `gradcam_*.pdf` | Grad-CAM heatmaps showing model attention regions |
 | `inference_demo.pdf` | MobileNetV2 applied to a real match image with bounding boxes |
 
@@ -169,10 +184,10 @@ python inference_demo.py
 
 ## Methodology
 
-1. **Dataset preparation** — Raw YOLO detection dataset converted to classification format by extracting bounding box crops
-2. **Balancing** — Random undersampling to limit each class to 1,500 images
-3. **Augmentation** — Rotation, flipping, zoom, brightness variation, and shifting
+1. **Dataset preparation** — Raw YOLO detection dataset converted to classification format by extracting bounding box crops, preserving the original train/valid/test split
+2. **Balancing** — Random undersampling applied to the **train split only** (up to 1,500 images per class); valid and test splits kept unchanged
+3. **Augmentation** — Rotation, flipping, zoom, brightness variation, and shifting (training split only)
 4. **Training** — Custom CNN trained from scratch; MobileNetV2 and ResNet50 trained with two-phase transfer learning (feature extraction + fine-tuning)
-5. **Evaluation** — Accuracy, precision, recall, F1-score, confusion matrix
+5. **Evaluation** — Validation split used during training; held-out test split used for final accuracy, precision, recall, F1-score, and confusion matrix
 6. **Explainability** — Grad-CAM applied to the last convolutional layer of each model
 7. **Inference demo** — MobileNetV2 applied to a full match image with ground truth bounding boxes and model predictions overlaid

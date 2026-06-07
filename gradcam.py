@@ -266,13 +266,12 @@ def main():
     custom_cnn, mobilenet, resnet = load_models()
 
     # Set up validation generator to get file paths and class names
-    val_datagen = ImageDataGenerator(rescale=1./255, validation_split=0.2)
+    val_datagen = ImageDataGenerator(rescale=1./255)
     val_gen = val_datagen.flow_from_directory(
-        str(DATASET_PATH),
+        str(DATASET_PATH / 'valid'),
         target_size=(224, 224),
         batch_size=32,
         class_mode='categorical',
-        subset='validation',
         seed=42,
         shuffle=False
     )
@@ -281,7 +280,7 @@ def main():
     # Select SAMPLES_PER_CLASS images from each class for visualization
     sample_files = []
     for cls in CLASSES:
-        files = [f for f in val_gen.filepaths if f'/{cls}/' in f][:SAMPLES_PER_CLASS]
+        files = [f for f in val_gen.filepaths if f'/{cls}/' in f.replace('\\', '/')][:SAMPLES_PER_CLASS]
         sample_files.extend(files)
     print(f"Using {len(sample_files)} sample images ({SAMPLES_PER_CLASS} per class).")
 
