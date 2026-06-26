@@ -14,6 +14,7 @@ import os
 
 # Avoid TF/PyTorch GPU conflicts when both models are loaded in the same process.
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+os.environ.setdefault("YOLO_CONFIG_DIR", "/tmp/Ultralytics")
 
 import sys
 from pathlib import Path
@@ -27,7 +28,6 @@ from detector import load_yolo
 
 load_yolo()
 
-from constants import CLASSES
 from gradcam_utils import explain_crop
 from match_analysis import annotate_match, annotate_uploaded_match, list_match_examples
 from model_utils import load_mobilenet
@@ -78,7 +78,13 @@ def run_match_analysis(image, example_name: str | None):
 def run_crop_explorer(image):
     if image is None:
         raise gr.Error("Please upload a crop image first.")
-    return explain_crop(crop_model, image)
+    probs, summary, overlay = explain_crop(crop_model, image)
+    prob_lines = "\n".join(
+        f"- **{cls}:** {probs[cls]:.1%}"
+        for cls in sorted(probs, key=probs.get, reverse=True)
+    )
+    full_summary = f"{summary}\n\n**Probabilities:**\n{prob_lines}"
+    return full_summary, overlay
 
 
 with gr.Blocks(title="Football Role Classifier", theme=gr.themes.Soft()) as demo:
@@ -103,9 +109,9 @@ with gr.Blocks(title="Football Role Classifier", theme=gr.themes.Soft()) as demo
                     )
                 with gr.Column(scale=2):
                     match_output = gr.Image(type="pil", label="Annotated frame")
-                    match_summary = gr.Markdown(label="Summary")
+                    match_summary = gr.Markdown()
 
-            match_input.upload(lambda: None, outputs=example_name)
+            match_input.upload(lambda: "", outputs=example_name)
 
             analyze_btn.click(
                 fn=run_match_analysis,
@@ -125,20 +131,19 @@ with gr.Blocks(title="Football Role Classifier", theme=gr.themes.Soft()) as demo
                         label="Example crops",
                     )
                 with gr.Column():
-                    crop_summary = gr.Markdown(label="Result")
-                    crop_probs = gr.Label(num_top_classes=len(CLASSES), label="Probabilities")
+                    crop_summary = gr.Markdown()
                     gradcam_output = gr.Image(type="numpy", label="Grad-CAM overlay")
 
             classify_btn.click(
                 fn=run_crop_explorer,
                 inputs=crop_input,
-                outputs=[crop_probs, crop_summary, gradcam_output],
+                outputs=[crop_summary, gradcam_output],
             )
             crop_input.change(
                 fn=run_crop_explorer,
                 inputs=crop_input,
-                outputs=[crop_probs, crop_summary, gradcam_output],
+                outputs=[crop_summary, gradcam_output],
             )
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(server_name="0.0.0.0")

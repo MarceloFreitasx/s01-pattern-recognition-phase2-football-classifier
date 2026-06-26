@@ -6,6 +6,7 @@ colorTo: blue
 sdk: gradio
 sdk_version: 5.12.0
 app_file: app.py
+python_version: "3.10"
 pinned: false
 license: cc-by-4.0
 ---
