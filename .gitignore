@@ -28,8 +28,10 @@ dataset_balanced/
 
 # ============================================================
 # Trained model weights — not tracked in git (too large)
-# ============================================================
+# Copy to demo/model/ for local/HF deploy; use Git LFS when publishing a Space.
 outputs/*.keras
+demo/model/*.keras
+demo/model/*.pt
 
 # ============================================================
 # Generated figures — optional, can be regenerated
