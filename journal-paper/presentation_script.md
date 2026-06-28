@@ -5,22 +5,82 @@
 > Language note: slides + narration below are in English to match the paper.
 > Ask if you want a Portuguese version of the narration.
 > Pace: ~140–150 words/min. Total target ≈ 10:00. Times are cumulative budgets.
+> Slide deck: an animated web version of these slides lives in `slides/index.html`
+> (open it in a browser, or run `python3 -m http.server` inside `slides/`). It includes
+> live charts with the real numbers below — handy for screen-recording the talk.
+>
+> **Required format (per instructor): max 10:00 video = 2:00 live demo + 8:00 slides.**
+> - **Part A (0:00–2:00):** screen-record the public app and narrate the demo (script below).
+> - **Part B (2:00–10:00):** present the slides. The 13 slides below were originally budgeted
+>   for 10:00, so to fit 8:00 keep narration tight and trim the lower-priority slides
+>   (Slide 7 setup → ~20s; Slides 3 & 11 → ~30s each). Slide 8 stays the centerpiece.
+>
+> ⚠️ The HF Space sleeps when idle — open it ~1 min before recording so it is awake.
+>
+> **Speaker notes cues (press `S` in the browser):**
+> - **Negrito** (`.say`) = texto para falar em voz alta
+> - **Cinza itálico** (`.hint`) = orientação de palco — não ler (ex.: “apontar gráfico”, “contadores animam”)
+> - **`→ AVANÇAR`** (yellow) — press `→` or Space *after* reading the text above it; reveals the next bullet/card/fragment on the current slide.
+> - **`→ SLIDE`** (blue) — press `→` once more to go to the **next slide** (when there are no hidden items left).
+> - **`DEMO`** (purple) — switch to screen-recording the Hugging Face app (Part A only).
+> Read each **bold** block aloud, then hit the cue — slides stay in sync with your speech.
 
 ---
 
-## Slide 1 — Title (0:00–0:30)
+## Part A — Live Demo (0:00–2:00)
+**Public link:** https://huggingface.co/spaces/marcelofreitasue/football-role-classifier
+
+**Two ways to record:**
+
+| Modo | Como |
+|------|------|
+| **Contínuo (recomendado)** | Slide Title (apresentação) → Slide Live Demo → grava tela HF → volta aos slides (Problem em diante) |
+| **Separado (formato professor)** | Grave só a demo (0–2 min), depois grave os slides; no Title use a variante “You just saw…” e **pule** o slide Live Demo |
+
+**On screen (demo):** the live Hugging Face Space (not slides).
+
+**What to show (record your screen):**
+1. Open the public link; show it loads in a plain browser — "no install, just a URL."
+2. Upload a clear **player** crop → show predicted role + confidence.
+3. Upload a **ball** crop → correct, high confidence.
+4. Upload a **goalkeeper** or **referee** crop → use it to mention these are the harder classes.
+5. (Optional) Upload a tiny/blurry crop → show lower confidence, motivating the robustness analysis.
+
+**Narration (após intro no slide Title):**
+"Let me show you the site. I'll open the public Hugging Face link — no install, just a browser tab. That's the whole point: low cost, easy access. I upload a player crop — the app returns the predicted role and a confidence score straight away. Now a ball — usually correct, often with high confidence; once it's cropped, the ball is actually one of the easier classes. A goalkeeper or a referee — trickier; in a small crop they can look a lot like outfield players, and you'll see that in the numbers later. The app runs the compact Custom CNN — the model that turned out most balanced in my tests. Okay — back to the slides. Let me explain how I built and evaluated it."
+
+---
+
+---
+
+# Part B — Slides (2:00–10:00 · 8 minutes)
+
+## Slide 1 — Title (início · ~0:25 se contínuo, ou 2:00–2:25 se demo já gravada)
+
 **On slide:**
 - Title of the paper
 - Your name, University of Europe for Applied Sciences
 - Pattern Recognition Course Project
-- (optional) one football broadcast image in the background
+- Live-demo link + football broadcast image in the background
+- Callout: *First: live demo · Then: methodology & results*
 
-**Narration:**
-"Hi, I'm Marcelo. In this video I'll present my Pattern Recognition project: an explainable, transfer-learning framework for classifying on-pitch roles — ball, goalkeeper, player, and referee — directly from broadcast football images. I'll cover the problem, the dataset, my methodology, the main results, and what I learned."
+**Narration (gravação contínua — começo do vídeo):**
+"Hi, I'm Marcelo Augusto, from the University of Europe for Applied Sciences. This is my Pattern Recognition course project — an explainable transfer-learning framework that classifies four on-pitch roles in football broadcasts: ball, goalkeeper, player, and referee. The idea is affordable, trustworthy classification from ordinary broadcast crops — not just a high accuracy number, but something you can actually deploy and inspect. I'll start with a quick live demo of the public web app, then walk through the dataset, the three models I compared, and the results that surprised me."
+
+**Narration (se demo já foi gravada antes — Parte A separada):**
+"You just saw the project running live. I'm Marcelo Augusto, from the University of Europe for Applied Sciences. What follows is the work behind that demo — how I built a framework to classify four roles in football broadcasts, the dataset, the models, and what surprised me in the results." *(Pule o slide Live Demo.)*
 
 ---
 
-## Slide 2 — Problem & Motivation (0:30–1:30)
+## Slide 1b — Live Demo intro (~0:25–2:00 · só na gravação contínua)
+
+**On slide:** HF Space link, bullets, callout *The next 2 minutes are a live walkthrough of the app.*
+
+**Narration:** *(mesmo texto da Part A acima; depois → SLIDE para Problem)*
+
+---
+
+## Slide 2 — Problem & Motivation
 **On slide:**
 - "Every match = hours of video, mostly unused"
 - Roles to identify: ball / goalkeeper / player / referee
@@ -28,7 +88,7 @@
 - Goal: low-cost, automatic role recognition for smaller clubs
 
 **Narration:**
-"Every televised match produces hours of footage, but turning that into useful data still depends on manual work or expensive commercial systems that smaller clubs can't afford. A first step for any analytics — tactics, scouting, live stats — is knowing what each object on the pitch is. So my goal was to build an affordable model that recognises the four basic roles from ordinary broadcast crops, and — just as importantly — to check whether it can be *trusted*, not just whether it scores well."
+"So that was the app running live. The question behind it: every match on TV generates hours of video — but most of it never becomes usable data. You still need manual labelling or expensive commercial tools, and that's out of reach for smaller clubs and independent researchers. Before you can do anything useful — tactics, scouting, live stats — you have to know what's in the frame. So I wanted a model that could do that from ordinary broadcast crops, without a huge budget — and I didn't want to stop at accuracy. I needed to know whether the model is actually trustworthy, not just whether it scores well."
 
 ---
 
@@ -41,7 +101,7 @@
 - RQ5: Main errors & what's needed for real deployment?
 
 **Narration:**
-"I framed the project around five research questions: how accurately CNNs can classify the roles; whether a custom network or transfer learning works better; how much preprocessing and class balancing matter; whether explainability methods confirm the model looks at the right regions; and finally, what the main errors are and what real deployment would require. Everything in the results maps back to these five questions."
+"I organised the project around five questions. RQ1: can CNNs actually classify these four roles from broadcast crops? RQ2: does a small custom network beat transfer learning — MobileNetV2 and ResNet50? RQ3: how much do preprocessing, augmentation, and balancing matter when the data is this skewed? RQ4: when I look inside the model with Grad-CAM and SHAP, is it paying attention to the object — or to something else? RQ5: where does it fail, and what would it take to deploy this for real? Each results section answers one of them."
 
 ---
 
@@ -54,7 +114,7 @@
 - Highlight: player = 13,239 vs ball = 405 → strong imbalance
 
 **Narration:**
-"I used a public, openly-licensed Roboflow dataset of 663 annotated match images. I cropped every bounding box, giving 15,636 object crops across the four classes. The key challenge is visible in this table: it's extremely imbalanced — over thirteen thousand player crops versus only four hundred balls. I kept the original train/validation/test split at the image level so crops from the same frame never leak across splits, and I balanced *only* the training set, leaving validation and test realistically imbalanced."
+"The data comes from a public Roboflow dataset — Football Players Detection, CC BY 4.0. Six hundred and sixty-three match images; every YOLO bounding box became its own crop — 15,636 samples across four classes. I kept the original split at the match level so crops from the same frame never leak across train, validation and test. Balancing only touched training; validation and test stay imbalanced on purpose, because that's what deployment looks like. The table tells the story: over thirteen thousand player crops, four hundred balls — a thirty-three-times gap, and players alone are eighty-four percent of the test set."
 
 ---
 
@@ -64,7 +124,7 @@
 - Steps: crops → leakage-free split → train-only balancing + augmentation → 3 models → training → evaluation → Grad-CAM + SHAP + robustness
 
 **Narration:**
-"Here's the full pipeline. After extracting and cleaning crops, I preserve the match-level split, balance only the training data with undersampling plus class weights, and apply label-preserving augmentation — rotation, shifts, zoom, brightness, and horizontal flip. I deliberately avoided strong colour changes, because kit colour is exactly what separates goalkeepers and referees from players. Then I train three models and evaluate them not only with accuracy, but with per-class and macro F1, explainability, and robustness tests."
+"Here's the pipeline end to end. Extract and clean crops, preserve the match-level split, balance training only with undersampling and class weights, apply label-preserving augmentation — rotation, shifts, zoom, brightness, horizontal flip. I deliberately avoided strong colour changes, because kit colour is how you tell a goalkeeper or referee from an outfield player. Then train three models and evaluate them with macro F1, per-class metrics, Grad-CAM, SHAP, and a robustness stress test — not just accuracy."
 
 ---
 
@@ -75,7 +135,7 @@
 - **MobileNetV2** (~3.05M) and **ResNet50** (~24.8M): two-phase transfer learning (freeze head → fine-tune last layers)
 
 **Narration:**
-"I compare three models under identical conditions. The baseline is a compact custom CNN with four convolutional blocks and only 0.46 million parameters. Against it I fine-tune two ImageNet-pretrained backbones: the lightweight MobileNetV2 and the much larger ResNet50. Both use a two-phase strategy — first I train only the new head with the backbone frozen, then I unfreeze the last layers and fine-tune at a low learning rate. This lets me ask whether extra capacity actually helps on a small, imbalanced dataset."
+"Three models, same data, same recipe. The baseline is a compact custom CNN — four conv blocks, 0.46 million parameters, trained from scratch. Against it, MobileNetV2 at 3.05M and ResNet50 at 24.8M, both ImageNet pre-trained. Same two-phase strategy: freeze the backbone, train the head, then unfreeze the last layers and fine-tune slowly — thirty layers for MobileNet, fifteen for ResNet. The honest question: on a dataset this small and this skewed, does a bigger network actually help — or does it just learn to cheat?"
 
 ---
 
@@ -85,7 +145,7 @@
 - Hardware: NVIDIA RTX 3080; TensorFlow/Keras; reproducible scripts + Kaggle notebook
 
 **Narration:**
-"All models share the same setup: Adam optimizer, weighted categorical cross-entropy to penalise minority-class errors, batch size 32, early stopping, and a learning-rate scheduler. Everything ran on a single RTX 3080 in TensorFlow and Keras, with the code organised into reproducible scripts and a Kaggle notebook."
+"Training was identical across models: Adam, weighted cross-entropy so mistakes on rare classes hurt more, batch 32, early stopping, ReduceLROnPlateau — always keeping the best validation checkpoint, not the last epoch. One RTX 3080, TensorFlow/Keras, scripts plus a Kaggle notebook. Fair warning: one run per model, one split — I treat small gaps as suggestive, not statistically proven."
 
 ---
 
@@ -95,10 +155,12 @@
 - Custom CNN: 77.9% acc, **macro F1 0.67** (best balanced)
 - MobileNetV2: 69.1% acc, macro F1 0.60
 - ResNet50: **84.0% acc** but **macro F1 0.23**
+- Per-class F1 (Ball / GK / Player / Ref): Custom CNN 0.94 / 0.30 / 0.87 / 0.58 · MobileNetV2 0.82 / 0.18 / 0.80 / 0.59 · ResNet50 0.00 / 0.00 / 0.91 / 0.00
+- Goalkeeper is the hardest *real* class for every model
 - **Insert ResNet50 test confusion matrix** (all mass in "player")
 
 **Narration:**
-"This is the core result, and it's counter-intuitive. By raw accuracy, ResNet50 *wins* with 84 percent. But look at its macro F1 — only 0.23. The confusion matrix explains why: ResNet50 predicts 'player' for *every single crop*. Since players are 84 percent of the test set, it gets high accuracy while completely failing on ball, goalkeeper, and referee, scoring zero F1 on all three. The little custom CNN, by contrast, gives the most balanced performance — 78 percent accuracy and a 0.67 macro F1 — and it does that with fifty times fewer parameters. So the headline lesson is: under class imbalance, accuracy alone is misleading."
+"This is the slide to slow down on — the result that surprised me. ResNet50 has the highest accuracy, eighty-four percent. If you stopped there, you'd call it the winner. But macro F1 is 0.23. The confusion matrix explains why: it predicts 'player' for every single crop. Since players are eighty-four percent of the test set, that shortcut buys high accuracy while scoring zero F1 on ball, goalkeeper, and referee. The custom CNN gives the most balanced performance — seventy-eight percent accuracy, 0.67 macro F1 — with fifty times fewer parameters. Among models that actually distinguish classes, goalkeeper is the hardest. Bottom line: under class imbalance, accuracy on its own will lie to you."
 
 ---
 
@@ -109,18 +171,19 @@
 - ResNet50: diffuse / background → confirms it ignores content
 
 **Narration:**
-"To check trust, I used two explainability methods. For the custom CNN and MobileNetV2, both Grad-CAM and SHAP put the evidence on the object itself — the player's body or the ball. For ResNet50, neither method shows consistent object focus. Two independent methods agreeing gives me confidence this isn't an artifact: the high-accuracy model simply isn't using the image content. Explainability turned a 'best' model into a clearly untrustworthy one."
+"Numbers aren't enough — I wanted to see where the models look. For the custom CNN and MobileNetV2, Grad-CAM and SHAP both focus on the object: the player's body, the ball. For ResNet50, the maps are diffuse, attention drifting to the background. Two very different techniques, same conclusion: the high-accuracy model isn't really using the image. Explainability turned the apparent winner into an obvious no-go."
 
 ---
 
 ## Slide 10 — Robustness (8:00–8:30)
 **On slide:**
 - **Insert robustness figure (robustness_accuracy.pdf)**
-- 5 corruptions × 5 severities
-- Custom CNN & MobileNetV2 respond; ResNet50 = flat line (degenerate)
+- 5 corruptions × 5 severities (blur, noise, low brightness, occlusion, JPEG)
+- Custom CNN & MobileNetV2 respond (e.g. CNN 77.9% → ~9% under strong brightness loss)
+- ResNet50 = flat line at 84.0% (degenerate, not robust)
 
 **Narration:**
-"I also stress-tested the models with blur, noise, brightness, occlusion, and JPEG compression. The custom CNN and MobileNetV2 degrade as you'd expect. ResNet50 produces a perfectly flat line at every severity — but that's not robustness, it's the same collapse: a model that always says 'player' is trivially invariant to any corruption. This independently confirms the explainability finding."
+"I also hammered the test set with blur, noise, brightness loss, occlusion, and JPEG compression. The custom CNN and MobileNetV2 degrade as you'd expect — the CNN drops from about seventy-eight to nine percent under strong darkening. ResNet50 draws a flat line at eighty-four everywhere. That looks like robustness; it isn't. It's the same shortcut — always 'player' — so corruption doesn't change the output. Third piece of evidence, same story."
 
 ---
 
@@ -132,7 +195,7 @@
 - Future: more balanced data (esp. goalkeepers), external validation, YOLO integration, focal loss, uncertainty
 
 **Narration:**
-"The main limitations: the dataset is small and from a single source, the minority classes have very few test crops, and I report a single run on one split. The system also classifies pre-made crops rather than detecting objects in full frames. The most valuable next steps are a larger, better-balanced dataset — especially more goalkeepers — external validation on other broadcasts, and integrating the classifier with a YOLO detector for an end-to-end system."
+"Being upfront about limits: one public dataset, not many ball or goalkeeper crops, one run per model on one split. The classifier works on crops you already have — you'd still need a detector like YOLO for full frames. What I'd do next: more data, especially goalkeepers; validate on other broadcasts; wire this into a detector for an end-to-end pipeline."
 
 ---
 
@@ -144,7 +207,7 @@
 - Smallest model = most reliable & deployable
 
 **Narration:**
-"To conclude: the compact custom CNN was the most balanced and the most deployable model, while the highest-accuracy model was actually the worst once we looked beyond accuracy. The big takeaway is methodological — macro F1, per-class metrics, explainability, and robustness together are what reveal whether a model is genuinely working. For this task, the smallest and cheapest model was also the most trustworthy."
+"Wrapping up: the custom CNN was the most balanced and the one I deployed — 0.67 macro F1 at 0.46M parameters. The highest-accuracy model was actually the worst once you looked per class. Grad-CAM, SHAP, and robustness all pointed at the same shortcut. For this task, the smallest model was also the most trustworthy. The takeaway I'd take forward: macro F1, per-class metrics, explainability, and robustness together — not accuracy on its own."
 
 ---
 
@@ -156,11 +219,12 @@
 - Contact / questions
 
 **Narration:**
-"Thanks for watching. The full code is on GitHub, the experiments are reproducible in the linked Kaggle notebook, and all details are in the paper. I'm happy to answer any questions."
+"Thanks for watching. The live app is on Hugging Face, the code and Kaggle notebook are linked, and the paper has the full write-up. Happy to take questions."
 
 ---
 
 ## Production checklist
+- [ ] Animated web deck ready at `slides/index.html` (reveal.js + Chart.js). Press `S` for speaker notes, `F` for fullscreen, `→`/Space to advance.
 - [ ] Export each referenced figure/table as a clean image for the slides.
 - [ ] Create `Figures/workflow.pdf` and `Figures/architecture.pdf` first (slides 5 & 6 need them).
 - [ ] Keep ~13 slides; rehearse once to confirm ≈10:00.
