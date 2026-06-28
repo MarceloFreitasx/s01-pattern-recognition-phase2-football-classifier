@@ -8,6 +8,9 @@ player, referee). This script reads each image alongside its corresponding YOLO
 label file, crops each annotated bounding box, and saves the crops into separate
 class folders — transforming a detection dataset into a classification dataset.
 
+The original Roboflow train/valid/test split is preserved so that crops from
+different match images never leak between splits during training or evaluation.
+
 Input structure:
     data/
     ├── train/
@@ -22,10 +25,15 @@ Input structure:
 
 Output structure:
     dataset/
-    ├── ball/         <- cropped ball images
-    ├── goalkeeper/   <- cropped goalkeeper images
-    ├── player/       <- cropped player images
-    └── referee/      <- cropped referee images
+    ├── train/
+    │   ├── ball/
+    │   ├── goalkeeper/
+    │   ├── player/
+    │   └── referee/
+    ├── valid/
+    │   └── ...
+    └── test/
+        └── ...
 """
 
 import cv2
@@ -41,15 +49,16 @@ OUTPUT_DIR  = PROJECT_DIR / 'dataset'  # output classification dataset
 # Class names must match the order defined in data/data.yaml
 CLASSES = ['ball', 'goalkeeper', 'player', 'referee']
 
-# Dataset splits to process
+# Dataset splits to process — mirrors the Roboflow dataset structure
 SPLITS = ['train', 'valid', 'test']
 
 # Minimum bounding box size in pixels — smaller crops are likely noise
 MIN_CROP_SIZE = 10
 
-# Create one output folder per class
-for cls in CLASSES:
-    (OUTPUT_DIR / cls).mkdir(parents=True, exist_ok=True)
+# Create one output folder per split and class
+for split in SPLITS:
+    for cls in CLASSES:
+        (OUTPUT_DIR / split / cls).mkdir(parents=True, exist_ok=True)
 
 print(f"Project directory : {PROJECT_DIR}")
 print(f"Data directory    : {DATA_DIR}")
@@ -58,7 +67,7 @@ print(f"Output directory  : {OUTPUT_DIR}")
 # ============================================================
 # CROP EXTRACTION
 # ============================================================
-counts = {cls: 0 for cls in CLASSES}
+counts = {split: {cls: 0 for cls in CLASSES} for split in SPLITS}
 
 for split in SPLITS:
     images_dir = DATA_DIR / split / 'images'
@@ -118,11 +127,10 @@ for split in SPLITS:
             crop = img[y1:y2, x1:x2]
             cls_name = CLASSES[cls_id]
 
-            # Save the crop using the original image stem + annotation index
-            # to guarantee unique filenames across all splits
-            out_path = OUTPUT_DIR / cls_name / f"{img_path.stem}_{i}.jpg"
+            # Save inside the split folder to preserve the original dataset partition
+            out_path = OUTPUT_DIR / split / cls_name / f"{img_path.stem}_{i}.jpg"
             cv2.imwrite(str(out_path), crop)
-            counts[cls_name] += 1
+            counts[split][cls_name] += 1
 
 # ============================================================
 # SUMMARY
@@ -130,7 +138,15 @@ for split in SPLITS:
 print("\n" + "="*40)
 print("Dataset Extraction Summary")
 print("="*40)
-for cls, count in counts.items():
-    print(f"  {cls:12s}: {count:>6} crops")
-print(f"  {'TOTAL':12s}: {sum(counts.values()):>6} crops")
+for split in SPLITS:
+    split_total = sum(counts[split].values())
+    if split_total == 0:
+        continue
+    print(f"\n  [{split}]")
+    for cls, count in counts[split].items():
+        print(f"    {cls:12s}: {count:>6} crops")
+    print(f"    {'TOTAL':12s}: {split_total:>6} crops")
+
+grand_total = sum(sum(c.values()) for c in counts.values())
+print(f"\n  {'GRAND TOTAL':12s}: {grand_total:>6} crops")
 print(f"\nDataset saved to: {OUTPUT_DIR}")

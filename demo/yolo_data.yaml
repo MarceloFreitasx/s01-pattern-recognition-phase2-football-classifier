@@ -1,0 +1,10 @@
+path: /home/marce/projects/football-classifier/data
+train: train/images
+val: valid/images
+test: test/images
+nc: 4
+names:
+  - ball
+  - goalkeeper
+  - player
+  - referee

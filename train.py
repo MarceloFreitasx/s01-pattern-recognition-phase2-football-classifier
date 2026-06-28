@@ -69,37 +69,40 @@ train_datagen = ImageDataGenerator(
     horizontal_flip=True,      # randomly flip images left-right
     zoom_range=0.15,           # randomly zoom in/out
     brightness_range=[0.8, 1.2],  # randomly adjust brightness
-    validation_split=0.2       # reserve 20% of data for validation
 )
 
-# Validation generator applies only rescaling — no augmentation
-val_datagen = ImageDataGenerator(
-    rescale=1./255,
-    validation_split=0.2
-)
+# Validation and test generators apply only rescaling — no augmentation
+eval_datagen = ImageDataGenerator(rescale=1./255)
 
 train_generator = train_datagen.flow_from_directory(
-    str(DATASET_PATH),
+    str(DATASET_PATH / 'train'),
     target_size=(IMG_SIZE, IMG_SIZE),
     batch_size=BATCH_SIZE,
     class_mode='categorical',   # one-hot encoded labels for multi-class
-    subset='training',
     seed=SEED,
     shuffle=True
 )
 
-val_generator = val_datagen.flow_from_directory(
-    str(DATASET_PATH),
+val_generator = eval_datagen.flow_from_directory(
+    str(DATASET_PATH / 'valid'),
     target_size=(IMG_SIZE, IMG_SIZE),
     batch_size=BATCH_SIZE,
     class_mode='categorical',
-    subset='validation',
     seed=SEED,
     shuffle=False  # keep order consistent for evaluation
 )
 
+test_generator = eval_datagen.flow_from_directory(
+    str(DATASET_PATH / 'test'),
+    target_size=(IMG_SIZE, IMG_SIZE),
+    batch_size=BATCH_SIZE,
+    class_mode='categorical',
+    seed=SEED,
+    shuffle=False
+)
+
 print(f"\nClasses: {train_generator.class_indices}")
-print(f"Train: {train_generator.samples} | Val: {val_generator.samples}")
+print(f"Train: {train_generator.samples} | Val: {val_generator.samples} | Test: {test_generator.samples}")
 
 # Compute class weights to handle residual imbalance after balancing
 # This penalizes misclassifications of minority classes more heavily
@@ -114,12 +117,12 @@ print(f"Class weights: {class_weight_dict}")
 # ============================================================
 # CLASS DISTRIBUTION PLOT
 # ============================================================
-counts = {cls: len(list(DATASET_PATH.glob(f'{cls}/*.jpg'))) for cls in CLASSES}
+counts = {cls: len(list((DATASET_PATH / 'train' / cls).glob('*.jpg'))) for cls in CLASSES}
 
 plt.figure(figsize=(8, 5))
 plt.bar(counts.keys(), counts.values(),
         color=['#2196F3', '#FF9800', '#4CAF50', '#E91E63'])
-plt.title('Class Distribution — Balanced Dataset', fontsize=14, fontweight='bold')
+plt.title('Class Distribution — Balanced Training Set', fontsize=14, fontweight='bold')
 plt.ylabel('Number of Images')
 for i, (k, v) in enumerate(counts.items()):
     plt.text(i, v + 5, str(v), ha='center', fontweight='bold')
@@ -189,9 +192,9 @@ def plot_history(history, model_name):
 # ============================================================
 # EVALUATION
 # ============================================================
-def evaluate_model(model, generator, model_name):
+def evaluate_model(model, generator, model_name, split='validation'):
     """
-    Evaluates a trained model on the validation set.
+    Evaluates a trained model on a given split.
     Prints a full classification report and saves the confusion matrix as PDF.
     Returns the overall accuracy.
     """
@@ -202,7 +205,7 @@ def evaluate_model(model, generator, model_name):
     class_names = list(generator.class_indices.keys())
 
     print(f"\n{'='*50}")
-    print(f"Results: {model_name}")
+    print(f"Results: {model_name} ({split})")
     print('='*50)
     print(classification_report(y_true, y_pred, target_names=class_names))
 
@@ -211,13 +214,15 @@ def evaluate_model(model, generator, model_name):
     plt.figure(figsize=(7, 6))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
                 xticklabels=class_names, yticklabels=class_names)
-    plt.title(f'Confusion Matrix — {model_name}', fontweight='bold', fontsize=13)
+    plt.title(f'Confusion Matrix — {model_name} ({split})', fontweight='bold', fontsize=13)
     plt.ylabel('True Label')
     plt.xlabel('Predicted Label')
     plt.tight_layout()
-    plt.savefig(OUTPUT_DIR / f'cm_{model_name}.pdf', format='pdf', bbox_inches='tight')
+    suffix = '' if split == 'validation' else f'_{split}'
+    filename = f'cm_{model_name}{suffix}.pdf'
+    plt.savefig(OUTPUT_DIR / filename, format='pdf', bbox_inches='tight')
     plt.close()
-    print(f"Saved: cm_{model_name}.pdf")
+    print(f"Saved: {filename}")
 
     return np.mean(y_pred == y_true)
 
@@ -406,25 +411,36 @@ history_resnet_ft = resnet.fit(
 plot_history(history_resnet_ft, 'ResNet50')
 
 # ============================================================
-# EVALUATE ALL MODELS
+# EVALUATE ALL MODELS — validation split
 # ============================================================
-acc_cnn    = evaluate_model(custom_cnn, val_generator, 'Custom_CNN')
-acc_mobile = evaluate_model(mobilenet,  val_generator, 'MobileNetV2')
-acc_resnet = evaluate_model(resnet,     val_generator, 'ResNet50')
+val_acc_cnn    = evaluate_model(custom_cnn, val_generator, 'Custom_CNN', 'validation')
+val_acc_mobile = evaluate_model(mobilenet,  val_generator, 'MobileNetV2', 'validation')
+val_acc_resnet = evaluate_model(resnet,     val_generator, 'ResNet50', 'validation')
 
 # ============================================================
-# MODEL COMPARISON CHART
+# EVALUATE ALL MODELS — held-out test split
+# ============================================================
+print("\n" + "="*50)
+print("FINAL TEST SET EVALUATION")
+print("="*50)
+
+test_acc_cnn    = evaluate_model(custom_cnn, test_generator, 'Custom_CNN', 'test')
+test_acc_mobile = evaluate_model(mobilenet,  test_generator, 'MobileNetV2', 'test')
+test_acc_resnet = evaluate_model(resnet,     test_generator, 'ResNet50', 'test')
+
+# ============================================================
+# MODEL COMPARISON CHART (test set)
 # ============================================================
 models_names = ['Custom CNN', 'MobileNetV2', 'ResNet50']
-accuracies   = [acc_cnn, acc_mobile, acc_resnet]
+test_accuracies = [test_acc_cnn, test_acc_mobile, test_acc_resnet]
 
 plt.figure(figsize=(8, 5))
-bars = plt.bar(models_names, [a*100 for a in accuracies],
+bars = plt.bar(models_names, [a*100 for a in test_accuracies],
                color=['#2196F3', '#4CAF50', '#FF5722'])
 plt.ylim(0, 100)
-plt.title('Model Comparison — Validation Accuracy', fontweight='bold', fontsize=14)
+plt.title('Model Comparison — Test Accuracy', fontweight='bold', fontsize=14)
 plt.ylabel('Accuracy (%)')
-for bar, acc in zip(bars, accuracies):
+for bar, acc in zip(bars, test_accuracies):
     plt.text(bar.get_x() + bar.get_width()/2,
              bar.get_height() + 1,
              f'{acc*100:.1f}%', ha='center', fontweight='bold')
@@ -439,7 +455,7 @@ print("Saved: model_comparison.pdf")
 # Visual overview of the dataset — 4 sample images per class
 fig, axes = plt.subplots(4, 4, figsize=(12, 12))
 for i, cls in enumerate(CLASSES):
-    cls_files = list(DATASET_PATH.glob(f'{cls}/*.jpg'))[:4]
+    cls_files = list((DATASET_PATH / 'train' / cls).glob('*.jpg'))[:4]
     for j, img_path in enumerate(cls_files):
         img = keras.utils.load_img(str(img_path), target_size=(224, 224))
         img_array = keras.utils.img_to_array(img) / 255.0
@@ -458,6 +474,9 @@ print("Saved: sample_images.pdf")
 print("\n" + "="*50)
 print("FINAL RESULTS")
 print("="*50)
-for name, acc in zip(models_names, accuracies):
-    print(f"{name}: {acc*100:.2f}%")
+print(f"{'Model':<16} {'Validation':>12} {'Test':>12}")
+print("-" * 42)
+val_accuracies = [val_acc_cnn, val_acc_mobile, val_acc_resnet]
+for name, val_acc, test_acc in zip(models_names, val_accuracies, test_accuracies):
+    print(f"{name:<16} {val_acc*100:>11.2f}% {test_acc*100:>11.2f}%")
 print(f"\nAll outputs saved to: {OUTPUT_DIR}")
